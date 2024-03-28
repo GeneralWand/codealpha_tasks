@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="style.css"> 
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Chat bot</h1>
+        <div id="messages" class="messages-container"></div>
+        <div class="message-input-container">
+            <input type="text" id="messageBox" placeholder="Type your message here" class="message-input" />
+            <button id="send" title="Send Message!" class="send-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M2 21l21-9L2 3v7l15 2-15 2z" fill="currentColor"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div style="display: flex; justify-content: center;">
+            <button type="text" class="ent" onclick="sendMessage('Entertainment')">Entertainment</button>
+            <button type="text" class="ass" onclick="sendMessage('Assistance')">Assistance</button>
+            <button type="text" class="info" onclick="sendMessage('Information')">Information</button>
+        </div>
+    
+        <script>
+            function sendMessage(message) {
+                document.getElementById("messageBox").value = message; 
+                document.getElementById("send").click(); 
+            }
+        </script>
+    
+    </div>
+    
+
+    <script>
+        const sendBtn = document.querySelector('#send');
+        const messages = document.querySelector('#messages');
+        const messageBox = document.querySelector('#messageBox');
+        let ws = new WebSocket('ws://localhost:6969');
+
+        ws.onopen = function () {
+            console.log('WebSocket Client Connected');
+            showMessage("How can I help you today?", 'chatbot');
+            showMessage("Can you help me with information, assistance, or even entertainment?", 'user');
+            showMessage("Yes, I can help you with all that. Type your message.", 'chatbot');
+        };
+
+        ws.onmessage = function (e) {
+            const responseData = JSON.parse(e.data);
+            const innerMessage = JSON.parse(responseData.message);
+            showMessage("Chatbot: " + innerMessage.message, 'chatbot');
+        };
+
+        ws.onerror = function (error) {
+            console.log("WebSocket error: " + error);
+        };
+
+        function showMessage(message, sender) {
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add(sender === 'user' ? 'user-message' : 'chatbot-message');
+            messageElement.classList.add('message');
+            messageElement.textContent = message;
+            messageContainer.appendChild(messageElement);
+            messages.appendChild(messageContainer);
+            messages.scrollTop = messages.scrollHeight;
+            messageBox.value = '';
+        }
+        
+        sendBtn.onclick = function () {
+            if (messageBox.value.trim() !== "") {
+                ws.send(JSON.stringify({ message: messageBox.value }));
+                showMessage("You: " + messageBox.value, 'user');
+            }
+        };
+
+        
+        messageBox.addEventListener('keydown', function(event) {
+            
+            if (event.key === 'Enter') {
+                    event.preventDefault();
+                    sendBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
